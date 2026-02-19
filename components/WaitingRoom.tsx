@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import { socketService } from '../socket';
 import { Users, Play, Loader2, Crown, LogOut, AlertTriangle } from 'lucide-react';
@@ -20,67 +21,44 @@ const WaitingRoom: React.FC<WaitingRoomProps> = ({ playerName, room, onStartGame
     const [players, setPlayers] = useState<PlayerInfo[]>([]);
     const [myId, setMyId] = useState<string>('');
     const [hostId, setHostId] = useState<string>(room.hostId || '');
-
-    const hasJoinedRef = useRef(false);
-    const playersRef = useRef<PlayerInfo[]>([]);
-    const myIdRef = useRef('');
-    const hostIdRef = useRef(room.hostId || '');
+    const hasJoined = useRef(false);
 
     useEffect(() => {
+        console.log("[WaitingRoom] Avvio componente...");
+        
         socketService.connect();
-        hasJoinedRef.current = false;
 
         const handleWelcome = (data: any) => {
-            const nextPlayers = data.players || [];
-            playersRef.current = nextPlayers;
-            setPlayers(nextPlayers);
-
-            const nextHostId = data.hostId || '';
-            hostIdRef.current = nextHostId;
-            setHostId(nextHostId);
-
-            const nextMyId = data.myAssignedId || '';
-            myIdRef.current = nextMyId;
-            setMyId(nextMyId);
-
-            hasJoinedRef.current = true;
+            console.log("✅ Benvenuto ricevuto!", data);
+            setPlayers(data.players || []);
+            setHostId(data.hostId);
+            setMyId(data.myAssignedId);
+            hasJoined.current = true;
         };
 
         const handleNewPlayer = (player: PlayerInfo) => {
+            console.log("👤 Nuovo giocatore:", player.name);
             setPlayers(prev => {
                 if (prev.find(p => p.id === player.id)) return prev;
-                const next = [...prev, player];
-                playersRef.current = next;
-                return next;
+                return [...prev, player];
             });
         };
 
         const handlePlayerLeft = (data: { playerId: string }) => {
-            setPlayers(prev => {
-                const next = prev.filter(p => p.id !== data.playerId);
-                playersRef.current = next;
-                return next;
-            });
+            setPlayers(prev => prev.filter(p => p.id !== data.playerId));
         };
 
-        const handleHostChange = (data: { hostId: string; players: PlayerInfo[] }) => {
-            const nextHostId = data.hostId || '';
-            hostIdRef.current = nextHostId;
-            setHostId(nextHostId);
-
-            if (Array.isArray(data.players)) {
-                playersRef.current = data.players;
-                setPlayers(data.players);
-            }
+        const handleHostChange = (data: { hostId: string, players: PlayerInfo[] }) => {
+            setHostId(data.hostId);
+            if (data.players) setPlayers(data.players);
         };
 
         const handleStartGame = () => {
-            const resolvedMyId = myIdRef.current || socketService.socketId || 'unknown';
-            const resolvedHostId = hostIdRef.current;
+            console.log("🚀 Start command received");
             onStartGame({
-                myId: resolvedMyId,
-                isHost: resolvedMyId === resolvedHostId,
-                players: playersRef.current
+                myId: myId || socketService.socketId || 'unknown',
+                isHost: myId === hostId,
+                players: players
             });
         };
 
@@ -90,9 +68,9 @@ const WaitingRoom: React.FC<WaitingRoomProps> = ({ playerName, room, onStartGame
         socketService.on('v2_host', handleHostChange);
         socketService.on('v2_start', handleStartGame);
 
-        socketService.emit('v2_hello', { roomId: room.id, name: playerName });
         const joinInterval = setInterval(() => {
-            if (!hasJoinedRef.current) {
+            if (!hasJoined.current) {
+                console.log("📡 Tentativo invio v2_hello...");
                 socketService.emit('v2_hello', { roomId: room.id, name: playerName });
             } else {
                 clearInterval(joinInterval);
@@ -107,7 +85,7 @@ const WaitingRoom: React.FC<WaitingRoomProps> = ({ playerName, room, onStartGame
             socketService.off('v2_host', handleHostChange);
             socketService.off('v2_start', handleStartGame);
         };
-    }, [room.id, playerName, onStartGame]);
+    }, [room.id, playerName, onStartGame, myId, hostId, players]);
 
     const isMeHost = myId === hostId;
     const canStart = players.length >= 2;
@@ -126,7 +104,7 @@ const WaitingRoom: React.FC<WaitingRoomProps> = ({ playerName, room, onStartGame
                     <h3 className="text-[10px] font-bold text-slate-500 uppercase tracking-[0.2em] mb-3 flex items-center gap-2">
                         <Users className="w-3 h-3" /> Membri Squadra ({players.length})
                     </h3>
-
+                    
                     <div className="space-y-2 max-h-48 overflow-y-auto pr-2">
                         {players.length === 0 ? (
                             <div className="flex items-center justify-center py-4 text-slate-600 gap-2">
@@ -152,7 +130,7 @@ const WaitingRoom: React.FC<WaitingRoomProps> = ({ playerName, room, onStartGame
                 <div className="pt-4 space-y-3">
                     {isMeHost ? (
                         <div className="space-y-2">
-                            <button
+                            <button 
                                 onClick={() => socketService.emit('v2_start', { roomId: room.id })}
                                 disabled={!canStart}
                                 className="w-full py-4 bg-indigo-600 hover:bg-indigo-500 disabled:bg-slate-800 disabled:text-slate-600 disabled:cursor-not-allowed text-white font-black rounded-xl transition-all flex items-center justify-center gap-2 uppercase tracking-widest shadow-lg shadow-indigo-500/20"
@@ -173,7 +151,7 @@ const WaitingRoom: React.FC<WaitingRoomProps> = ({ playerName, room, onStartGame
                         </div>
                     )}
 
-                    <button
+                    <button 
                         onClick={onLeave}
                         className="w-full py-3 text-slate-500 hover:text-rose-400 font-bold text-xs uppercase tracking-widest flex items-center justify-center gap-2 transition-colors"
                     >
