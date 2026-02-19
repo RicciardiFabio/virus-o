@@ -548,7 +548,18 @@ const MultiplayerArena: React.FC<MultiplayerArenaProps> = ({
 
         const dist = Math.hypot(bot.x - ai.lastX, bot.y - ai.lastY);
         ai.stuckTime = dist < 0.3 ? ai.stuckTime + 50 : 0;
-        if (ai.stuckTime > 800) { ai.isWandering = true; ai.wanderAngle = Math.random() * Math.PI * 2; ai.stuckTime = 0; }
+        if (ai.stuckTime > 800) {
+          ai.isWandering = true;
+          ai.wanderAngle = Math.random() * Math.PI * 2;
+        }
+        if (ai.stuckTime > 1600) {
+          // Hard unstuck: forza un micro-salto in zona libera per evitare bot fermo.
+          const escape = Math.random() * Math.PI * 2;
+          const jump = bot.radius * 5;
+          bot.x = Math.max(bot.radius, Math.min(ARENA_WIDTH - bot.radius, bot.x + Math.cos(escape) * jump));
+          bot.y = Math.max(bot.radius, Math.min(ARENA_HEIGHT - bot.radius, bot.y + Math.sin(escape) * jump));
+          ai.stuckTime = 0;
+        }
         ai.lastX = bot.x; ai.lastY = bot.y;
 
         let speedFactor = 1.0;
