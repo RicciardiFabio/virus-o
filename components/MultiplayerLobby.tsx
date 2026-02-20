@@ -124,7 +124,7 @@ const MultiplayerLobby: React.FC<MultiplayerLobbyProps> = ({ playerName, onBack,
                       </div>
                     </div>
                     <div className="bg-indigo-500/10 px-3 py-1 rounded-full border border-indigo-500/20 text-indigo-500 text-xs font-black">
-                      {room.playerCount} / 4
+                      {room.playerCount} / 30
                     </div>
                   </div>
                   

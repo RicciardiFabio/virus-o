@@ -141,6 +141,7 @@ const App: React.FC = () => {
           audioEnabled={audioEnabled}
           setAudioEnabled={setAudioEnabled}
           onExit={returnToLobby}
+          onGameOver={handleGameOver}
           sessionData={sessionData} // Passa i dati direttamente
         />
       )}

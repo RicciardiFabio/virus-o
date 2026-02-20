@@ -391,7 +391,7 @@ const GameArena: React.FC<GameArenaProps> = ({ playerName, botCount, audioEnable
               powerUps.forEach(pu => { const d = Math.hypot(pu.x - p.x, pu.y - p.y); if (d < puMinDist) { puMinDist = d; nearestPU = pu; } });
             }
             if (nearestPU) {
-              dx = nearestPU.x - p.x; dy = nearestPU.y - p.y;
+              dx = (nearestPU as any).x - p.x; dy = (nearestPU as any).y - p.y;
             } else if (p.state === PlayerState.INFECTED) {
               let target = null; let minDist = Infinity;
               players.forEach(other => {
@@ -408,7 +408,7 @@ const GameArena: React.FC<GameArenaProps> = ({ playerName, botCount, audioEnable
                   if (d < minDist) { minDist = d; target = other; }
                 }
               });
-              if (target) { dx = target.x - p.x; dy = target.y - p.y; }
+              if (target) { dx = (target as any).x - p.x; dy = (target as any).y - p.y; }
               else { p.angle += (Math.random() - 0.5); dx = Math.cos(p.angle); dy = Math.sin(p.angle); }
             } else {
               const threat = players.find(v => v.state === PlayerState.INFECTED && Math.hypot(p.x - v.x, p.y - v.y) < 600);
